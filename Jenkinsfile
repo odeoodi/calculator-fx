@@ -11,8 +11,6 @@ pipeline {
         DOCKER_IMAGE_TAG = 'latest'
     }
 
-
-
     stages {
 
         stage('Checkout') {
@@ -21,15 +19,9 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build + Test') {
             steps {
-                sh 'mvn clean install'
-            }
-        }
-
-        stage('Generate Report') {
-            steps {
-                sh 'mvn clean install'
+                sh 'mvn -B clean verify'
             }
         }
 
@@ -45,30 +37,38 @@ pipeline {
             }
         }
 
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(
+                        credentialsId: env.DOCKERHUB_CREDENTIALS_ID,
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                      export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+                      echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 sh '''
-      export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
-      docker version
-      docker build -t ${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG} .
-    '''
+                  export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+                  docker version
+                  docker build -t ${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG} .
+                '''
             }
         }
 
         stage('Push Docker Image to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: DOCKERHUB_CREDENTIALS_ID,
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-        export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
-        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-        docker push ${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}
-      '''
-                }
+                sh '''
+                  export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+                  docker push ${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}
+                '''
             }
-
-
-
         }
-    }}
+    }
+}

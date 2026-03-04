@@ -17,7 +17,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/odeoodi/speed_cal.git'
+                git branch: 'main', url: 'https://github.com/odeoodi/calculator-fx.git'
             }
         }
 

@@ -2,7 +2,7 @@
 FROM eclipse-temurin:21-jdk
 
 # Optional: set up display (for GUI forwarding)
-ENV DISPLAY=host.docker.internal:0.0
+ENV DISPLAY=host.docker.internal:0
 
 # Install dependencies for GUI + Maven build
 RUN apt-get update && \
